@@ -1,17 +1,14 @@
 pipeline {
-    agent any
+    agent { label 'docker-agent' }
 
     parameters {
         string(name: 'BRANCH_NAME', defaultValue: 'develop', description: 'Branch Name')
         string(name: 'VERSION', defaultValue: '1.0.1', description: 'Artifact version')
     }
 
-/*     tools {
-        jdk 'JDK24'
-    } */
-
     environment {
-        MAVEN_HOME = tool 'Maven 3.9.6' // Ajusta según tu configuración en Jenkins
+        MAVEN_HOME = tool 'Maven 3.9.6'
+        DOCKER_IMAGE = "erickperez091/dev-server-discovery"
     }
 
     stages {
@@ -60,5 +57,33 @@ pipeline {
                 )
             }
         }
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh """
+                        docker build \
+                          --build-arg JAR_FILE=target/server-discovery-${params.VERSION}.jar \
+                          -t ${DOCKER_IMAGE}:${BUILD_NUMBER} \
+                          -f Dockerfile .
+                        docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh """
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                        docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                        docker push ${DOCKER_IMAGE}:latest
+                    """
+                }
+            }
+        }
+    }
+    post {
+        success { echo 'inventory-service published successfully' }
+        failure { echo 'Error publishing inventory-service' }
     }
 }
