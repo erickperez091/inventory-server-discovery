@@ -32,7 +32,8 @@ pipeline {
                 script {
                     env.PROJECT_VERSION = sh(
                         script: '''
-                            mvn -q -DforceStdout \
+                            mvn -q \
+                                -DforceStdout \
                                 -Dexpression=project.version \
                                 help:evaluate
                         ''',
@@ -53,8 +54,8 @@ pipeline {
                     )
                 ]) {
                     sh '''
-                        mvn -s $MAVEN_SETTINGS \
-                            clean deploy \
+                        mvn clean deploy \
+                            -s $MAVEN_SETTINGS \
                             -DskipTests \
                             -DallowInsecureProtocol=true \
                             -U
@@ -67,7 +68,7 @@ pipeline {
             steps {
                 sh '''
                     docker build \
-                      --build-arg JAR_FILE=target/server-discovery-${PROJECT_VERSION}.jar \
+                      --build-arg JAR_FILE=target/*.jar \
                       -t ${DOCKER_IMAGE}:${PROJECT_VERSION} \
                       -t ${DOCKER_IMAGE}:latest \
                       .
@@ -106,4 +107,3 @@ pipeline {
         }
     }
 }
-
