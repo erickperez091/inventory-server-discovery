@@ -7,5 +7,4 @@ ARG JAR_FILE=target/*.jar
 COPY ${JAR_FILE} app.jar
 
 EXPOSE 8761
-ENTRYPOINT ["java", "-jar", "app.jar"]
-
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-XX:MaxRAMPercentage=75.0","-XX:+UseG1GC","-XX:+UseStringDeduplication","-XX:+ExitOnOutOfMemoryError","-jar","app.jar"]
