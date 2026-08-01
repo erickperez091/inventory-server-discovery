@@ -11,3 +11,21 @@ eureka:
     fetch-registry: false
   server:
     eviction-interval-timer-in-ms: 60000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
+          - metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
